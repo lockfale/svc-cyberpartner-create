@@ -21,7 +21,7 @@ spec:
         "beta.kubernetes.io/os": linux
       containers:
         - name: app-cyberpartner-create
-          image: 059039070213.dkr.ecr.us-east-1.amazonaws.com/svc-cyberpartner-create
+          image: 059039070213.dkr.ecr.us-east-1.amazonaws.com/cackalacky/2025/cyberpartner/svc-cyberpartner-create
           command: ["poetry", "run", "python", "main.py", "--topic", "ingress-cackalacky-cyberpartner-create", "--group", "create-cyberpartner"]
           envFrom:
             - secretRef:

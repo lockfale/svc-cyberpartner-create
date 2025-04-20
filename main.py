@@ -21,6 +21,7 @@ TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
 
 def create_cyberpartner_router(message: str):
+    """forcing build"""
     data = json.loads(message) if isinstance(message, str) else message
 
     # Handle badge_id creation flow
