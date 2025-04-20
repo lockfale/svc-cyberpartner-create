@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "ckc-cyberpartner-ingress-highway"
-version = "1.0.1"
-description = "Cyberpartner Event Ingress Highway"
+name = "svc-cyberpartner-create"
+version = "1.0.0"
+description = "Cyberpartner Create Service"
 authors = ["Alex Persinger <nutcrunch@cackalackycon.org>"]
 license = "MIT"
 
