@@ -180,7 +180,7 @@ jobs:
             fi
 
 workflows:
-  build_and_deploy_svc_broker_translation:
+  build_and_deploy_svc_cp_create:
     when:
       or: [
         << pipeline.parameters.src-modified >>,
