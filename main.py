@@ -130,6 +130,7 @@ def _handle_redis_new(data: Dict, cp_data: Dict) -> None:
 
 
 def _handle_redis_update_id(data: Dict, cp_data: Dict) -> None:
+    """Forcing build"""
     current_state = insert_cyberpartner.get_cyberpartner_redis(data.get("badge_id"))
     if current_state.get("cp", {}).get("id"):
         logger.error("CURRENT STATE => already has id key")

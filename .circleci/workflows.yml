@@ -227,7 +227,7 @@ workflows:
               only: /.*/
       - create_argocd_app:
           name: create_argocd_app
-          app_name: "svc-broker-translation"
+          app_name: "svc-cyberpartner-create"
           github_repo: "lockfale/svc-cyberpartner-create"
           context:
             - cackalacky
