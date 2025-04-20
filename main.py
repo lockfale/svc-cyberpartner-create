@@ -218,8 +218,6 @@ def main():
 
     try:
         for message in consumer.consumer:
-            logger.info("\n" + "=" * 50)
-            logger.info(f"Received message from partition {message.partition}, offset {message.offset}")
             TOPIC_MAP.get(args.topic, TOPIC_MAP.get("default"))(message.value)
     except KeyboardInterrupt:
         logger.info("\nExiting consumer")
