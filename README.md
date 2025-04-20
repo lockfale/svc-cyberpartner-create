@@ -1,4 +1,4 @@
-# Cyberpartner Event Ingress Highway
+# Service - Cyberpartner Create
 
 ## Build
 
@@ -49,7 +49,15 @@ aws codeartifact get-authorization-token --domain lockfale --domain-owner 059039
 Docker compose w/doppler to inject secrets / os vars
 
 ```bash
-doppler run -- docker compose up -d
+# First get the token
+export CODEARTIFACT_TOKEN=$(aws codeartifact get-authorization-token --domain ... --domain-owner ... --query authorizationToken --output text)
+
+# Build the image
+doppler run -- docker compose -f docker-compose.services.yaml build --build-arg CODEARTIFACT_TOKEN=$env:CODEARTIFACT_TOKEN
+
+# Run with infrastructure (Kafka, Redis, etc.)
+doppler run -- docker compose -f docker-compose.infrastructure.yaml up -d
+doppler run -- docker compose -f docker-compose.services.yaml up -d
 ```
 
 # Maintenance
