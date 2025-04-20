@@ -1,0 +1,27 @@
+name: svc-cyberpartner-create
+services:
+  app-cp-create:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    networks:
+      - flink-net
+    environment:
+      - DOPPLER_ENVIRONMENT
+      - KAFKA_BROKERS_SVC
+      - PG_DB_HOST
+      - PG_DB_CKC_POOL_PORT
+      - PG_DB_CKC_POOL
+      - PG_DB_CONNECTION_LIMIT
+      - PG_DB_USER
+      - PG_DB_PASSWORD
+      - REDIS_HOST
+      - REDIS_PORT
+    volumes:
+      - ./src:/app/src
+    working_dir: /app
+    command: poetry run python main.py --topic ingress-cackalacky-cyberpartner-create --group create-cyberpartner
+
+networks:
+  flink-net:
+    external: true

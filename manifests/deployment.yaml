@@ -1,0 +1,37 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: svc-cyberpartner-create
+  namespace: cackalacky
+  labels:
+    app: svc-cyberpartner-create
+spec:
+  replicas: 3
+  revisionHistoryLimit: 3
+  selector:
+    matchLabels:
+      app: svc-cyberpartner-create
+  template:
+    metadata:
+      labels:
+        app: svc-cyberpartner-create
+    spec:
+      nodeSelector:
+        "beta.kubernetes.io/os": linux
+      containers:
+        - name: app-cyberpartner-create
+          image: 059039070213.dkr.ecr.us-east-1.amazonaws.com/svc-cyberpartner-create
+          command: ["poetry", "run", "python", "main.py", "--topic", "ingress-cackalacky-cyberpartner-create", "--group", "create-cyberpartner"]
+          envFrom:
+            - secretRef:
+                name: doppler-ckc25-prod
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "1Gi"
+            limits:
+              cpu: "500m"
+              memory: "1Gi"
+      imagePullSecrets:
+        - name: regcred

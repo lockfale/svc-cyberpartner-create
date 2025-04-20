@@ -1,0 +1,1 @@
+$env:CODEARTIFACT_AUTH_TOKEN = (aws --profile ckc-bot-api codeartifact get-authorization-token --domain lockfale --domain-owner 059039070213 --region us-east-1 --query authorizationToken --output text)
