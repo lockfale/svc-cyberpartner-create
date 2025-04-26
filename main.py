@@ -58,7 +58,7 @@ def _handle_new_cyberpartner_creation(data: Dict) -> None:
     data["cp_obj"] = new_cp_obj
     logger.info(data)
 
-    topic = "egress-cackalacky-cyberpartner-create" if new_cp_obj.get("error") else "ingress-cackalacky-cyberpartner-create"
+    topic = "egress-mqtt-to-badge" if new_cp_obj.get("error") else "ingress-cackalacky-cyberpartner-create"
 
     if new_cp_obj.get("error"):
         data["result"] = 0
@@ -107,7 +107,7 @@ def _handle_redis_new(data: Dict, cp_data: Dict) -> None:
     # Send success message
     client.send_message(
         source_topic="ingress-cackalacky-cyberpartner-create",
-        destination_topic="egress-cackalacky-cyberpartner-create",
+        destination_topic="egress-mqtt-to-badge",
         message={"result": 1, **data},
     )
 
@@ -150,7 +150,7 @@ def _handle_redis_update_id(data: Dict, cp_data: Dict) -> None:
         payload = {**data, "cp_obj": current_state}
         client = KafkaProducer(kafka_broker=os.getenv("KAFKA_BROKERS_SVC"))
         client.send_message(
-            source_topic="ingress-cackalacky-cyberpartner-create", destination_topic="egress-cackalacky-cyberpartner-create", message=payload
+            source_topic="ingress-cackalacky-cyberpartner-create", destination_topic="egress-mqtt-to-badge", message=payload
         )
     except Exception as e:
         logger.error(f"Error updating Redis: {str(e)}")
