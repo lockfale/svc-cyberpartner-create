@@ -52,19 +52,18 @@ def create_cyberpartner_router(message: str):
 
 def _handle_new_cyberpartner_creation(data: Dict) -> None:
     new_cp_obj = generate_cyberpartner.create_new_cyberpartner(data)
-    client = KafkaProducer(kafka_broker=os.getenv("KAFKA_BROKERS_SVC"))
-
     data["action"] = "redis-new"
     data["cp_obj"] = new_cp_obj
     logger.info(data)
 
-    topic = "egress-mqtt-to-badge" if new_cp_obj.get("error") else "ingress-cackalacky-cyberpartner-create"
-
+    topic = "ingress-cackalacky-cyberpartner-create"
     if new_cp_obj.get("error"):
+        topic = "egress-mqtt-to-badge"
         data["result"] = 0
         del data["cp_obj"]
         del data["action"]
 
+    client = KafkaProducer(kafka_broker=os.getenv("KAFKA_BROKERS_SVC"))
     client.send_message(source_topic="ingress-cackalacky-cyberpartner-create", destination_topic=topic, key=data.get("badge_id"), message=data)
     client.disconnect()
 
@@ -146,12 +145,7 @@ def _handle_redis_update_id(data: Dict, cp_data: Dict) -> None:
     try:
         current_state["cp"]["id"] = cp_id
         insert_cyberpartner.upsert_cyberpartner_redis(data.get("badge_id"), current_state)
-
-        payload = {**data, "cp_obj": current_state, "force_mqtt_publish": True,}
-        client = KafkaProducer(kafka_broker=os.getenv("KAFKA_BROKERS_SVC"))
-        client.send_message(
-            source_topic="ingress-cackalacky-cyberpartner-create", destination_topic="egress-mqtt-to-badge", message=payload
-        )
+        payload = {**data, "cp_obj": current_state}
     except Exception as e:
         logger.error(f"Error updating Redis: {str(e)}")
         return
@@ -161,6 +155,7 @@ def _handle_redis_update_id(data: Dict, cp_data: Dict) -> None:
         now_utc = datetime.now(timezone.utc)
         ts_utc = now_utc.strftime(TIMESTAMP_FORMAT)[:-3]
         payload["message_received_ts"] = ts_utc
+        client = KafkaProducer(kafka_broker=os.getenv("KAFKA_BROKERS_SVC"))
         client.send_message(
             source_topic="ingress-cackalacky-cyberpartner-create",
             destination_topic="cyberpartner-event-log", message=payload
