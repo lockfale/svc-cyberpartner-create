@@ -147,7 +147,7 @@ def _handle_redis_update_id(data: Dict, cp_data: Dict) -> None:
         current_state["cp"]["id"] = cp_id
         insert_cyberpartner.upsert_cyberpartner_redis(data.get("badge_id"), current_state)
 
-        payload = {**data, "cp_obj": current_state}
+        payload = {**data, "cp_obj": current_state, "force_mqtt_publish": True,}
         client = KafkaProducer(kafka_broker=os.getenv("KAFKA_BROKERS_SVC"))
         client.send_message(
             source_topic="ingress-cackalacky-cyberpartner-create", destination_topic="egress-mqtt-to-badge", message=payload
