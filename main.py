@@ -215,7 +215,7 @@ def main():
         for message in consumer.consumer:
             TOPIC_MAP.get(args.topic, TOPIC_MAP.get("default"))(message.value)
     except KeyboardInterrupt:
-        logger.info("\nExiting consumer")
+        logger.info("\nExiting consumer.")
     finally:
         consumer.disconnect()
 
