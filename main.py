@@ -64,7 +64,7 @@ def _handle_new_cyberpartner_creation(data: Dict) -> None:
         del data["action"]
 
     client = KafkaProducer(kafka_broker=os.getenv("KAFKA_BROKERS_SVC"))
-    client.send_message(source_topic="ingress-cackalacky-cyberpartner-create", destination_topic=topic, key=data.get("badge_id"), message=data)
+    client.send_message(source_topic="ingress-cackalacky-cyberpartner-create", destination_topic=topic, message=data)
     client.disconnect()
 
 
@@ -213,7 +213,8 @@ def main():
 
     try:
         for message in consumer.consumer:
-            TOPIC_MAP.get(args.topic, TOPIC_MAP.get("default"))(message.value)
+            # create_cyberpartner_router(message.value)
+            logger.info("FLUSHING - FUCK IT")
     except KeyboardInterrupt:
         logger.info("\nExiting consumer.")
     finally:
