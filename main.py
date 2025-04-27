@@ -183,7 +183,7 @@ def _handle_reporting_attributes(data: Dict, cp_data: Dict) -> None:
 
 
 def display_cyber_partner(data: Dict):
-    """Display cyber partner information in a nicely formatted way"""
+    """Display cyber partner information in a nicely formatted way."""
     try:
         logger.info(f"\n===== DEFAULT =====")
         logger.info(data)
