@@ -169,8 +169,8 @@ def _handle_reporting_state(data: Dict, cp_data: Dict) -> None:
         logger.error("STATE => missing state key")
         return
 
-    pgsql = PostgreSQLConnector()
-    insert_cyberpartner.insert_cyberpartner_state(pgsql, cp_data)
+    # pgsql = PostgreSQLConnector()
+    # insert_cyberpartner.insert_cyberpartner_state(pgsql, cp_data)
 
 
 def _handle_reporting_attributes(data: Dict, cp_data: Dict) -> None:
@@ -178,8 +178,8 @@ def _handle_reporting_attributes(data: Dict, cp_data: Dict) -> None:
         logger.error("ATTRIBUTES => missing attributes key")
         return
 
-    pgsql = PostgreSQLConnector()
-    insert_cyberpartner.insert_cyberpartner_attributes(pgsql, cp_data)
+    # pgsql = PostgreSQLConnector()
+    # insert_cyberpartner.insert_cyberpartner_attributes(pgsql, cp_data)
 
 
 def display_cyber_partner(data: Dict):
