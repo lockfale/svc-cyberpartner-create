@@ -20,7 +20,7 @@ logger.setLevel(logging.INFO)
 TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
 
-def create_cyberpartner_router(message: str):
+def create_cyberpartner_router(client: KafkaProducer, message: str):
     """forcing build"""
     data = json.loads(message) if isinstance(message, str) else message
 
@@ -34,11 +34,11 @@ def create_cyberpartner_router(message: str):
         cp_data = data.get("cp_obj", {})
         match action:
             case "reporting-base":
-                return _handle_reporting_base(data, cp_data)
+                return _handle_reporting_base(client, data, cp_data)
             case "redis-new":
-                return _handle_redis_new(data, cp_data)
+                return _handle_redis_new(client, data, cp_data)
             case "redis-update-id":
-                return _handle_redis_update_id(data, cp_data)
+                return _handle_redis_update_id(client, data, cp_data)
             case "reporting-state":
                 return _handle_reporting_state(data, cp_data)
             case "reporting-attributes":
@@ -46,11 +46,8 @@ def create_cyberpartner_router(message: str):
             case _:
                 logger.warning("Unhandled action type")
 
-    # default case
-    display_cyber_partner(data)
 
-
-def _handle_new_cyberpartner_creation(data: Dict) -> None:
+def _handle_new_cyberpartner_creation(client: KafkaProducer, data: Dict) -> None:
     new_cp_obj = generate_cyberpartner.create_new_cyberpartner(data)
     data["action"] = "redis-new"
     data["cp_obj"] = new_cp_obj
@@ -63,12 +60,10 @@ def _handle_new_cyberpartner_creation(data: Dict) -> None:
         del data["cp_obj"]
         del data["action"]
 
-    client = KafkaProducer(kafka_broker=os.getenv("KAFKA_BROKERS_SVC"))
     client.send_message(source_topic="ingress-cackalacky-cyberpartner-create", destination_topic=topic, message=data)
-    client.disconnect()
 
 
-def _handle_reporting_base(data: Dict, cp_data: Dict) -> None:
+def _handle_reporting_base(client: KafkaProducer, data: Dict, cp_data: Dict) -> None:
     enriched_obj = copy.deepcopy(cp_data)
     base_payload = copy.deepcopy(data)
     del base_payload["action"]
@@ -76,7 +71,6 @@ def _handle_reporting_base(data: Dict, cp_data: Dict) -> None:
     pgsql = PostgreSQLConnector()
     enriched_obj["cp"] = insert_cyberpartner.insert_cyberpartner(pgsql, cp_data)
 
-    client = KafkaProducer(kafka_broker=os.getenv("KAFKA_BROKERS_SVC"))
     base_payload["cp_obj"] = enriched_obj
 
     messages = [
@@ -92,16 +86,14 @@ def _handle_reporting_base(data: Dict, cp_data: Dict) -> None:
             key=data.get("badge_id"),
             message=msg,
         )
-    client.disconnect()
 
 
-def _handle_redis_new(data: Dict, cp_data: Dict) -> None:
+def _handle_redis_new(client: KafkaProducer, data: Dict, cp_data: Dict) -> None:
     if not cp_data.get("state"):
         logger.error("REDIS => missing state key")
         return
 
     insert_cyberpartner.upsert_cyberpartner_redis(data.get("badge_id"), cp_data)
-    client = KafkaProducer(kafka_broker=os.getenv("KAFKA_BROKERS_SVC"))
 
     # Send success message
     client.send_message(
@@ -129,7 +121,7 @@ def _handle_redis_new(data: Dict, cp_data: Dict) -> None:
         logger.error(f"Error registering create event: {str(e)}")
 
 
-def _handle_redis_update_id(data: Dict, cp_data: Dict) -> None:
+def _handle_redis_update_id(client: KafkaProducer, data: Dict, cp_data: Dict) -> None:
     """Forcing build"""
     current_state = insert_cyberpartner.get_cyberpartner_redis(data.get("badge_id"))
     if current_state.get("cp", {}).get("id"):
@@ -155,7 +147,6 @@ def _handle_redis_update_id(data: Dict, cp_data: Dict) -> None:
         now_utc = datetime.now(timezone.utc)
         ts_utc = now_utc.strftime(TIMESTAMP_FORMAT)[:-3]
         payload["message_received_ts"] = ts_utc
-        client = KafkaProducer(kafka_broker=os.getenv("KAFKA_BROKERS_SVC"))
         client.send_message(
             source_topic="ingress-cackalacky-cyberpartner-create",
             destination_topic="cyberpartner-event-log", message=payload
@@ -182,22 +173,6 @@ def _handle_reporting_attributes(data: Dict, cp_data: Dict) -> None:
     # insert_cyberpartner.insert_cyberpartner_attributes(pgsql, cp_data)
 
 
-def display_cyber_partner(data: Dict):
-    """Display cyber partner information in a nicely formatted way"""
-    try:
-        logger.info(f"\n===== DEFAULT =====")
-        logger.info(data)
-    except Exception as e:
-        logger.info(f"Error displaying message: {str(e)}")
-        logger.info(f"Raw message: {data}")
-
-
-TOPIC_MAP = {
-    "ingress-cackalacky-cyberpartner-create": create_cyberpartner_router,
-    "default": display_cyber_partner,
-}
-
-
 def main():
     parser = argparse.ArgumentParser(description="Kafka Cyber Partner Test Consumer")
     parser.add_argument("--topic", default="flink-egress-state-update", help="Kafka topic to consume from")
@@ -210,15 +185,17 @@ def main():
     logger.info("Waiting for messages... (Press Ctrl+C to exit)")
 
     consumer = KafkaConsumer(os.getenv("KAFKA_BROKERS_SVC"), [args.topic], args.group)
+    producer_client = KafkaProducer(kafka_broker=os.getenv("KAFKA_BROKERS_SVC"))
 
     try:
         for message in consumer.consumer:
-            # create_cyberpartner_router(message.value)
+            # create_cyberpartner_router(producer_client, message.value)
             logger.info("FLUSHING - FUCK IT")
     except KeyboardInterrupt:
         logger.info("\nExiting consumer.")
     finally:
         consumer.disconnect()
+        producer_client.disconnect()
 
 
 if __name__ == "__main__":
