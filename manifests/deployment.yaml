@@ -6,6 +6,10 @@ metadata:
   namespace: cackalacky
   labels:
     app: svc-cyberpartner-create
+    broker-source: kafka
+    broker-source-topic: ingress-cackalacky-cyberpartner-create
+    broker-destination: kafka
+    broker-destination-topic: self,cyberpartner-event-log,egress-mqtt-to-badge
 spec:
   replicas: 3
   revisionHistoryLimit: 3
@@ -16,6 +20,10 @@ spec:
     metadata:
       labels:
         app: svc-cyberpartner-create
+        broker-source: kafka
+        broker-source-topic: ingress-cackalacky-cyberpartner-create
+        broker-destination: kafka
+        broker-destination-topic: self,cyberpartner-event-log,egress-mqtt-to-badge
     spec:
       nodeSelector:
         "beta.kubernetes.io/os": linux
@@ -26,12 +34,5 @@ spec:
           envFrom:
             - secretRef:
                 name: doppler-ckc25-prod
-          resources:
-            requests:
-              cpu: "500m"
-              memory: "1Gi"
-            limits:
-              cpu: "500m"
-              memory: "1Gi"
       imagePullSecrets:
         - name: regcred
