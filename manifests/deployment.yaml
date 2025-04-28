@@ -24,8 +24,6 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: svc-cyberpartner-create
-        app.kubernetes.io/component: processor
-        app.kubernetes.io/part-of: cackalacky
         broker.source.type: kafka
         broker.destination.type: kafka
       annotations:
