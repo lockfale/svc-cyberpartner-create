@@ -109,6 +109,7 @@ def _handle_redis_new(client: KafkaProducer, data: Dict, cp_data: Dict) -> None:
 
 
 def main():
+    """,,,"""
     parser = argparse.ArgumentParser(description="Kafka Cyber Partner Test Consumer")
     parser.add_argument("--topic", default="flink-egress-state-update", help="Kafka topic to consume from")
     parser.add_argument("--group", default="test-consumer-group", help="Consumer group ID")
