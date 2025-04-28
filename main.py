@@ -74,7 +74,9 @@ def _handle_new_cyberpartner_creation(client: KafkaProducer, data: Dict) -> None
         data["result"] = 0
         del data["cp_obj"]
         del data["action"]
-
+    logger.info("---------- HELLO -----------")
+    logger.info(client.producer._closed)
+    logger.info("---------- WORLD -----------")
     client.send_message(source_topic="ingress-cackalacky-cyberpartner-create", destination_topic=topic, message=data)
 
 
