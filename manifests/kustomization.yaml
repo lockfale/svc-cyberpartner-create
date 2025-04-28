@@ -6,4 +6,4 @@ namespace: cackalacky
 images:
 - name: 059039070213.dkr.ecr.us-east-1.amazonaws.com/cackalacky/2025/cyberpartner/svc-cyberpartner-create
   newName: 059039070213.dkr.ecr.us-east-1.amazonaws.com/cackalacky/2025/cyberpartner/svc-cyberpartner-create
-  newTag: main-82f7db1c6a957772cbdee494ef835f8cbf0d81f6
+  newTag: main-69844b059562e4d2e599b95b20061fd69438c13d
