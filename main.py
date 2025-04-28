@@ -45,7 +45,7 @@ def upsert_cyberpartner_redis(badge_id: str, cp_obj: Dict):
 
 
 def create_cyberpartner_router(client: KafkaProducer, message: str):
-    """forcing build"""
+    """forcing build."""
     data = json.loads(message) if isinstance(message, str) else message
 
     # Handle badge_id creation flow

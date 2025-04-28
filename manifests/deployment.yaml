@@ -9,9 +9,13 @@ metadata:
     app.kubernetes.io/component: processor
     app.kubernetes.io/part-of: cackalacky
     broker.source.type: kafka
-    broker.source.topics: ingress-cackalacky-cyberpartner-create
     broker.destination.type: kafka
-    broker.destination.topics: ingress-cackalacky-cyberpartner-create,cyberpartner-event-log,egress-mqtt-to-badge
+  annotations:
+    broker.source.topics: ingress-cackalacky-cyberpartner-create
+    broker.destination.topics: |
+      ingress-cackalacky-cyberpartner-create
+      cyberpartner-event-log
+      egress-mqtt-to-badge
 spec:
   replicas: 3
   revisionHistoryLimit: 3
@@ -25,9 +29,13 @@ spec:
         app.kubernetes.io/component: processor
         app.kubernetes.io/part-of: cackalacky
         broker.source.type: kafka
-        broker.source.topics: ingress-cackalacky-cyberpartner-create
         broker.destination.type: kafka
-        broker.destination.topics: ingress-cackalacky-cyberpartner-create,cyberpartner-event-log,egress-mqtt-to-badge
+      annotations:
+        broker.source.topics: ingress-cackalacky-cyberpartner-create
+        broker.destination.topics: |
+          ingress-cackalacky-cyberpartner-create
+          cyberpartner-event-log
+          egress-mqtt-to-badge
     spec:
       nodeSelector:
         "beta.kubernetes.io/os": linux
