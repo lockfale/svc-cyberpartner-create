@@ -4,20 +4,44 @@ import json
 import logging
 import logging.config
 import os
-from typing import Dict
 from datetime import datetime, timezone
+from typing import Dict, Optional
 
+import redis
 from lockfale_connectors.lf_kafka.kafka_consumer import KafkaConsumer
 from lockfale_connectors.lf_kafka.kafka_producer import KafkaProducer
-from lockfale_connectors.postgres.pgsql import PostgreSQLConnector
 
-from cyberpartner_create import generate_cyberpartner, insert_cyberpartner
+from cyberpartner_create import generate_cyberpartner
 
 logging.config.fileConfig("log.ini")
 logger = logging.getLogger("console")
 logger.setLevel(logging.INFO)
 
 TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
+
+redis_host = os.getenv("REDIS_HOST", "redis")
+redis_port = int(os.getenv("REDIS_PORT", "6379"))
+REDIS_CLIENT: Optional[redis.Redis] = None
+
+
+def setup_redis():
+    global REDIS_CLIENT
+    REDIS_CLIENT = redis.Redis(
+        host=redis_host,
+        port=redis_port,
+        decode_responses=True,  # optional, strings not bytes
+    )
+
+
+def shutdown_redis():
+    global REDIS_CLIENT
+    if REDIS_CLIENT:
+        REDIS_CLIENT.close()
+
+
+def upsert_cyberpartner_redis(badge_id: str, cp_obj: Dict):
+    logger.info(f"REDIS insert_cyberpartner: {cp_obj.get('cp', {}).get('id')}")
+    REDIS_CLIENT.set(badge_id, json.dumps(cp_obj))
 
 
 def create_cyberpartner_router(client: KafkaProducer, message: str):
@@ -26,32 +50,23 @@ def create_cyberpartner_router(client: KafkaProducer, message: str):
 
     # Handle badge_id creation flow
     if data.get("badge_id") and not data.get("action"):
-        return _handle_new_cyberpartner_creation(data)
+        return _handle_new_cyberpartner_creation(client, data)
 
     # Handle action-based flows
     action = data.get("action")
     if action:
         cp_data = data.get("cp_obj", {})
         match action:
-            case "reporting-base":
-                return _handle_reporting_base(client, data, cp_data)
             case "redis-new":
                 return _handle_redis_new(client, data, cp_data)
-            case "redis-update-id":
-                return _handle_redis_update_id(client, data, cp_data)
-            case "reporting-state":
-                return _handle_reporting_state(data, cp_data)
-            case "reporting-attributes":
-                return _handle_reporting_attributes(data, cp_data)
             case _:
-                logger.warning("Unhandled action type")
+                logger.warning(f"Unhandled action type: {action}")
 
 
 def _handle_new_cyberpartner_creation(client: KafkaProducer, data: Dict) -> None:
     new_cp_obj = generate_cyberpartner.create_new_cyberpartner(data)
     data["action"] = "redis-new"
     data["cp_obj"] = new_cp_obj
-    logger.info(data)
 
     topic = "ingress-cackalacky-cyberpartner-create"
     if new_cp_obj.get("error"):
@@ -63,37 +78,12 @@ def _handle_new_cyberpartner_creation(client: KafkaProducer, data: Dict) -> None
     client.send_message(source_topic="ingress-cackalacky-cyberpartner-create", destination_topic=topic, message=data)
 
 
-def _handle_reporting_base(client: KafkaProducer, data: Dict, cp_data: Dict) -> None:
-    enriched_obj = copy.deepcopy(cp_data)
-    base_payload = copy.deepcopy(data)
-    del base_payload["action"]
-
-    pgsql = PostgreSQLConnector()
-    enriched_obj["cp"] = insert_cyberpartner.insert_cyberpartner(pgsql, cp_data)
-
-    base_payload["cp_obj"] = enriched_obj
-
-    messages = [
-        {"action": "redis-update-id", **base_payload},
-        {"action": "reporting-state", **base_payload},
-        {"action": "reporting-attributes", **base_payload},
-    ]
-
-    for msg in messages:
-        client.send_message(
-            source_topic="ingress-cackalacky-cyberpartner-create",
-            destination_topic="ingress-cackalacky-cyberpartner-create",
-            key=data.get("badge_id"),
-            message=msg,
-        )
-
-
 def _handle_redis_new(client: KafkaProducer, data: Dict, cp_data: Dict) -> None:
     if not cp_data.get("state"):
         logger.error("REDIS => missing state key")
         return
 
-    insert_cyberpartner.upsert_cyberpartner_redis(data.get("badge_id"), cp_data)
+    upsert_cyberpartner_redis(data.get("badge_id"), cp_data)
 
     # Send success message
     client.send_message(
@@ -106,71 +96,16 @@ def _handle_redis_new(client: KafkaProducer, data: Dict, cp_data: Dict) -> None:
     base_payload = copy.deepcopy(data)
     base_payload.update({"action": "reporting-base", "result": 1})
     client.send_message(
-        source_topic="ingress-cackalacky-cyberpartner-create", destination_topic="ingress-cackalacky-cyberpartner-create", message=base_payload
+        source_topic="ingress-cackalacky-cyberpartner-create", destination_topic="cyberpartner-create-additional", message=base_payload
     )
     try:
-        base_payload['new_state'] = base_payload['cp_obj']
+        base_payload["new_state"] = base_payload["cp_obj"]
         now_utc = datetime.now(timezone.utc)
         ts_utc = now_utc.strftime(TIMESTAMP_FORMAT)[:-3]
         base_payload["message_received_ts"] = ts_utc
-        client.send_message(
-            source_topic="ingress-cackalacky-cyberpartner-create",
-            destination_topic="cyberpartner-event-log", message=base_payload
-        )
+        client.send_message(source_topic="ingress-cackalacky-cyberpartner-create", destination_topic="cyberpartner-event-log", message=base_payload)
     except Exception as e:
         logger.error(f"Error registering create event: {str(e)}")
-
-
-def _handle_redis_update_id(client: KafkaProducer, data: Dict, cp_data: Dict) -> None:
-    """Forcing build"""
-    current_state = insert_cyberpartner.get_cyberpartner_redis(data.get("badge_id"))
-    if current_state.get("cp", {}).get("id"):
-        logger.error("CURRENT STATE => already has id key")
-        return
-
-    cp_id = cp_data.get("cp", {}).get("id", -1)
-    if cp_id == -1:
-        logger.error("MESSAGE STATE => missing id key")
-        return
-
-    prev_state = copy.deepcopy(current_state)
-    try:
-        current_state["cp"]["id"] = cp_id
-        insert_cyberpartner.upsert_cyberpartner_redis(data.get("badge_id"), current_state)
-        payload = {**data, "cp_obj": current_state}
-    except Exception as e:
-        logger.error(f"Error updating Redis: {str(e)}")
-        return
-
-    try:
-        payload.update({'new_state': current_state, 'prev_state': prev_state})
-        now_utc = datetime.now(timezone.utc)
-        ts_utc = now_utc.strftime(TIMESTAMP_FORMAT)[:-3]
-        payload["message_received_ts"] = ts_utc
-        client.send_message(
-            source_topic="ingress-cackalacky-cyberpartner-create",
-            destination_topic="cyberpartner-event-log", message=payload
-        )
-    except Exception as e:
-        logger.error(f"Error registering create event: {str(e)}")
-
-
-def _handle_reporting_state(data: Dict, cp_data: Dict) -> None:
-    if not data.get("cp_obj", {}).get("state"):
-        logger.error("STATE => missing state key")
-        return
-
-    # pgsql = PostgreSQLConnector()
-    # insert_cyberpartner.insert_cyberpartner_state(pgsql, cp_data)
-
-
-def _handle_reporting_attributes(data: Dict, cp_data: Dict) -> None:
-    if not data.get("cp_obj", {}).get("attributes", []):
-        logger.error("ATTRIBUTES => missing attributes key")
-        return
-
-    # pgsql = PostgreSQLConnector()
-    # insert_cyberpartner.insert_cyberpartner_attributes(pgsql, cp_data)
 
 
 def main():
@@ -182,20 +117,25 @@ def main():
     logger.info(f"Connecting to Kafka broker at {os.getenv('KAFKA_BROKERS_SVC')}")
     logger.info(f"Consuming messages from topic: {args.topic}")
     logger.info(f"Group ID: {args.group}")
-    logger.info("Waiting for messages... (Press Ctrl+C to exit)")
-
-    consumer = KafkaConsumer(os.getenv("KAFKA_BROKERS_SVC"), [args.topic], args.group)
-    producer_client = KafkaProducer(kafka_broker=os.getenv("KAFKA_BROKERS_SVC"))
 
     try:
+        consumer = KafkaConsumer(os.getenv("KAFKA_BROKERS_SVC"), [args.topic], args.group)
+        setup_redis()
+        producer_client = KafkaProducer(kafka_broker=os.getenv("KAFKA_BROKERS_SVC"))
+    except Exception as e:
+        logger.error(f"Error initializing resources: {str(e)}")
+        return
+
+    logger.info("Waiting for messages... (Press Ctrl+C to exit)")
+    try:
         for message in consumer.consumer:
-            # create_cyberpartner_router(producer_client, message.value)
-            logger.info("FLUSHING - FUCK IT")
+            create_cyberpartner_router(producer_client, message.value)
     except KeyboardInterrupt:
         logger.info("\nExiting consumer.")
     finally:
         consumer.disconnect()
         producer_client.disconnect()
+        shutdown_redis()
 
 
 if __name__ == "__main__":

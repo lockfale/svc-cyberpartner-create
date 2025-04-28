@@ -5,11 +5,13 @@ metadata:
   name: svc-cyberpartner-create
   namespace: cackalacky
   labels:
-    app: svc-cyberpartner-create
-    broker-source: kafka
-    broker-source-topic: ingress-cackalacky-cyberpartner-create
-    broker-destination: kafka
-    broker-destination-topic: self-cyberpartner-event-log-egress-mqtt-to-badge
+    app.kubernetes.io/name: svc-cyberpartner-create
+    app.kubernetes.io/component: processor
+    app.kubernetes.io/part-of: cackalacky
+    broker.source.type: kafka
+    broker.source.topics: ingress-cackalacky-cyberpartner-create
+    broker.destination.type: kafka
+    broker.destination.topics: ingress-cackalacky-cyberpartner-create,cyberpartner-event-log,egress-mqtt-to-badge
 spec:
   replicas: 3
   revisionHistoryLimit: 3
@@ -19,11 +21,13 @@ spec:
   template:
     metadata:
       labels:
-        app: svc-cyberpartner-create
-        broker-source: kafka
-        broker-source-topic: ingress-cackalacky-cyberpartner-create
-        broker-destination: kafka
-        broker-destination-topic: self-cyberpartner-event-log-egress-mqtt-to-badge
+        app.kubernetes.io/name: svc-cyberpartner-create
+        app.kubernetes.io/component: processor
+        app.kubernetes.io/part-of: cackalacky
+        broker.source.type: kafka
+        broker.source.topics: ingress-cackalacky-cyberpartner-create
+        broker.destination.type: kafka
+        broker.destination.topics: ingress-cackalacky-cyberpartner-create,cyberpartner-event-log,egress-mqtt-to-badge
     spec:
       nodeSelector:
         "beta.kubernetes.io/os": linux
