@@ -22,26 +22,41 @@ TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 redis_host = os.getenv("REDIS_HOST", "redis")
 redis_port = int(os.getenv("REDIS_PORT", "6379"))
 REDIS_CLIENT: Optional[redis.Redis] = None
+REDIS_CLIENT_INVENTORY: Optional[redis.Redis] = None
 
+redis_db_idx_cp_inventory = int(os.getenv("REDIS_DB_IDX_CP_INVENTORY", 5))
 
 def setup_redis():
     global REDIS_CLIENT
+    global REDIS_CLIENT_INVENTORY
     REDIS_CLIENT = redis.Redis(
         host=redis_host,
         port=redis_port,
         decode_responses=True,  # optional, strings not bytes
+        db=0,
+    )
+    REDIS_CLIENT_INVENTORY = redis.Redis(
+        host=redis_host,
+        port=redis_port,
+        decode_responses=True,  # optional, strings not bytes
+        db=redis_db_idx_cp_inventory,
     )
 
 
 def shutdown_redis():
     global REDIS_CLIENT
+    global REDIS_CLIENT_INVENTORY
     if REDIS_CLIENT:
         REDIS_CLIENT.close()
+    if REDIS_CLIENT_INVENTORY:
+        REDIS_CLIENT_INVENTORY.close()
+
 
 
 def upsert_cyberpartner_redis(badge_id: str, cp_obj: Dict):
     logger.info(f"REDIS insert_cyberpartner: {cp_obj.get('cp', {}).get('id')}")
     REDIS_CLIENT.set(badge_id, json.dumps(cp_obj))
+    REDIS_CLIENT_INVENTORY.set(badge_id, json.dumps({}))  # empty inventory
 
 
 def create_cyberpartner_router(client: KafkaProducer, message: str):
@@ -109,7 +124,6 @@ def _handle_redis_new(client: KafkaProducer, data: Dict, cp_data: Dict) -> None:
 
 
 def main():
-    """,,,"""
     parser = argparse.ArgumentParser(description="Kafka Cyber Partner Test Consumer")
     parser.add_argument("--topic", default="flink-egress-state-update", help="Kafka topic to consume from")
     parser.add_argument("--group", default="test-consumer-group", help="Consumer group ID")
