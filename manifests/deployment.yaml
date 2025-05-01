@@ -15,7 +15,7 @@ metadata:
       cyberpartner-event-log
       egress-mqtt-to-badge
 spec:
-  replicas: 3
+  replicas: 36
   revisionHistoryLimit: 3
   selector:
     matchLabels:
