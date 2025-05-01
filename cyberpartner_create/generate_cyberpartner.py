@@ -78,6 +78,11 @@ def get_sprite_indexes() -> List[Dict]:
         {"id": 3, "name": "frankenstein", "index": 2, "weight": 0.1},
         {"id": 4, "name": "kuchitamatchi", "index": 3, "weight": 0},
         {"id": 5, "name": "batabatchi", "index": 4, "weight": 0},
+        {"id": 6, "name": "mizutamatchi", "index": 5, "weight": 0},
+        {"id": 7, "name": "hashitamatchi", "index": 6, "weight": 0},
+        {"id": 8, "name": "androtchi", "index": 7, "weight": 0},
+        {"id": 9, "name": "bill", "index": 8, "weight": 0},
+        {"id": 10, "name": "ojitchi", "index": 9, "weight": 0},
     ]
 
 
