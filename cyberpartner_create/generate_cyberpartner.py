@@ -99,6 +99,16 @@ def get_archetypes() -> List[Dict]:
     ]
 
 
+def populate_inventory() -> Dict:
+    return  {
+        "apple": 5,
+        "bread": 5,
+        "cereal": 2,
+        "water": 5,
+        "soda": 1
+    }
+
+
 def get_available_attributes() -> List[Dict]:
     return [
         {"id": 1, "group": "age", "name": "ageless", "multiplier": 0, "chance": 1.0},
@@ -158,6 +168,8 @@ def get_cyberpartner_by_badge_id_redis(badge_id: str) -> bool:
         return True
     return False
 
+def create_cp_inventory() -> Dict:
+    return populate_inventory()
 
 def create_new_cyberpartner(data: Dict) -> Dict:
     """
@@ -244,8 +256,6 @@ def create_new_cyberpartner(data: Dict) -> Dict:
             },
             "attributes": cp_attributes,
         }
-
-        logger.info(cp_obj)
         return cp_obj
     except Exception as e:
         logger.error(e)

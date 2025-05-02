@@ -12,6 +12,7 @@ from lockfale_connectors.lf_kafka.kafka_consumer import KafkaConsumer
 from lockfale_connectors.lf_kafka.kafka_producer import KafkaProducer
 
 from cyberpartner_create import generate_cyberpartner
+from cyberpartner_create.generate_cyberpartner import create_cp_inventory
 
 logging.config.fileConfig("log.ini")
 logger = logging.getLogger("console")
@@ -56,7 +57,7 @@ def shutdown_redis():
 def upsert_cyberpartner_redis(badge_id: str, cp_obj: Dict):
     logger.info(f"REDIS insert_cyberpartner: {cp_obj.get('cp', {}).get('id')}")
     REDIS_CLIENT.set(badge_id, json.dumps(cp_obj))
-    REDIS_CLIENT_INVENTORY.set(badge_id, json.dumps({}))  # empty inventory
+    REDIS_CLIENT_INVENTORY.set(badge_id, json.dumps(create_cp_inventory()))  # fresh inventory
 
 
 def create_cyberpartner_router(client: KafkaProducer, message: str):
