@@ -105,7 +105,8 @@ def populate_inventory() -> Dict:
         "bread": 5,
         "cereal": 2,
         "water": 5,
-        "soda": 1
+        "soda": 1,
+        "money": 100
     }
 
 
