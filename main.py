@@ -55,6 +55,7 @@ def shutdown_redis():
 
 
 def upsert_cyberpartner_redis(badge_id: str, cp_obj: Dict):
+    """build me"""
     logger.info(f"REDIS insert_cyberpartner: {cp_obj.get('cp', {}).get('id')}")
     REDIS_CLIENT.set(badge_id, json.dumps(cp_obj))
     REDIS_CLIENT_INVENTORY.set(badge_id, json.dumps(create_cp_inventory()))  # fresh inventory
