@@ -53,10 +53,16 @@ def shutdown_redis():
         REDIS_CLIENT_INVENTORY.close()
 
 
+def does_badge_have_cyberpartner(badge_id: str) -> bool:
+    """build me"""
+    cp_obj = REDIS_CLIENT.get(badge_id)
+    if cp_obj:
+        return True
+    return False
+
 
 def upsert_cyberpartner_redis(badge_id: str, cp_obj: Dict):
     """build me"""
-    logger.info(f"REDIS insert_cyberpartner: {cp_obj.get('cp', {}).get('id')}")
     REDIS_CLIENT.set(badge_id, json.dumps(cp_obj))
     REDIS_CLIENT_INVENTORY.set(badge_id, json.dumps(create_cp_inventory()))  # fresh inventory
 
@@ -64,12 +70,10 @@ def upsert_cyberpartner_redis(badge_id: str, cp_obj: Dict):
 def create_cyberpartner_router(client: KafkaProducer, message: str):
     """forcing build."""
     data = json.loads(message) if isinstance(message, str) else message
+    if not data.get("badge_id"):
+        logger.error(f"Missing required field(s): badge_id")
+        return
 
-    # Handle badge_id creation flow
-    if data.get("badge_id") and not data.get("action"):
-        return _handle_new_cyberpartner_creation(client, data)
-
-    # Handle action-based flows
     action = data.get("action")
     if action:
         cp_data = data.get("cp_obj", {})
@@ -78,6 +82,12 @@ def create_cyberpartner_router(client: KafkaProducer, message: str):
                 return _handle_redis_new(client, data, cp_data)
             case _:
                 logger.warning(f"Unhandled action type: {action}")
+
+    existing_cp = does_badge_have_cyberpartner(data.get("badge_id"))
+    if existing_cp:
+        logger.info(f"Badge {data.get('badge_id')} already has a cyberpartner. Skipping creation.")
+        return
+    return _handle_new_cyberpartner_creation(client, data)
 
 
 def _handle_new_cyberpartner_creation(client: KafkaProducer, data: Dict) -> None:

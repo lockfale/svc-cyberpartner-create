@@ -1,15 +1,10 @@
-import json
 import logging
 import logging.config
 import os
 import random
-import time
 from datetime import datetime, timezone
-from typing import Dict, List, Optional
+from typing import Dict, List
 
-import pandas as pd
-import psycopg
-import redis
 from lockfale_connectors.postgres.pgsql import PostgreSQLConnector
 
 redis_host = os.getenv("REDIS_HOST", "redis")
@@ -135,38 +130,6 @@ def get_prefabbed_cyberpartner():
     pass
 
 
-def get_user_by_badge_id(pgsql: PostgreSQLConnector, badge_id: bytes) -> Optional[pd.DataFrame]:
-    CHECK_QRY = """
-        select encode(b.badge_id, 'hex') as badge_id
-        from cackalacky.badge b
-        where b.badge_id = %(badge_id)s
-    """
-    params = {"badge_id": psycopg.Binary(badge_id)}
-    record = pgsql.select_dict(query=CHECK_QRY, params=params)
-    return pd.DataFrame(record)
-
-
-def get_cyberpartner_by_badge_id(pgsql: PostgreSQLConnector, badge_id: bytes) -> Optional[pd.DataFrame]:
-    CHECK_QRY = """
-        select cp.id 
-        FROM cyberpartner cp
-        JOIN cyberpartner_state cps on cps.cyberpartner_id = cp.id
-        JOIN badge b ON cp.badge_id = b.id
-        where b.badge_id = %(badge_id)s and cps.status < 1000
-    """
-    params = {"badge_id": psycopg.Binary(badge_id)}
-    record = pgsql.select_dict(query=CHECK_QRY, params=params)
-    return pd.DataFrame(record)
-
-
-def get_cyberpartner_by_badge_id_redis(badge_id: str) -> bool:
-    logger.info(f"REDIS get_cyberpartner: {badge_id}")
-    redis_client = redis.Redis(host=redis_host, port=redis_port, decode_responses=True)
-    snapshot = redis_client.get(badge_id)
-    if snapshot:
-        return True
-    return False
-
 def create_cp_inventory() -> Dict:
     return populate_inventory()
 
@@ -187,7 +150,6 @@ def create_new_cyberpartner(data: Dict) -> Dict:
         # TODO => otel metric
         return {"error": "Missing required field(s): badge_id"}
 
-    pgsql = PostgreSQLConnector()
     _ref_families = get_families()
     _ref_archetypes = get_archetypes()
     _ref_sprites = get_sprite_indexes()
@@ -205,19 +167,7 @@ def create_new_cyberpartner(data: Dict) -> Dict:
     received_attributes = choose_stat_multipliers(_ref_attributes)
     default_multipliers = get_default_multipliers()
     applied_multipliers = apply_stat_multipliers(default_multipliers, received_attributes)
-
     try: # badge_id
-        badge_record = get_user_by_badge_id(pgsql, bytes.fromhex(badge_id))
-        if len(badge_record) == 0:
-            logger.error("User has not registered yet. Cannot create cyberpartner.")
-            return {"error": "User has not registered yet. Cannot create cyberpartner."}
-
-        existing_alive_cyberpartner = get_cyberpartner_by_badge_id_redis(badge_id)
-        if existing_alive_cyberpartner:
-            logger.error(f"Badge {badge_id} already has a cyberpartner... should we kill it?")
-            return {"error": f"Badge {badge_id} already has a cyberpartner... should we kill it?"}
-
-        badge_record_dict = badge_record.to_dict("records")[0]
         cp_stats = {
             "strength": 5,
             "defense": 5,
@@ -235,10 +185,11 @@ def create_new_cyberpartner(data: Dict) -> Dict:
                 "family": chosen_family,
                 "archetype": chosen_archetype,
                 "sprite": chosen_sprite,
+                "birthday_epoch": ts_utc,
                 "stats": cp_stats,
                 "stat_modifiers": applied_multipliers,
                 "user_id": 0, # default - chilling for now
-                "badge_id": badge_record_dict["badge_id"],
+                "badge_id": badge_id,
                 "is_active": 1,
             },
             "state": {
