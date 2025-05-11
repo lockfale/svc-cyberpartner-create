@@ -4,11 +4,7 @@ import os
 import random
 from datetime import datetime, timezone
 from typing import Dict, List
-
-from lockfale_connectors.postgres.pgsql import PostgreSQLConnector
-
-redis_host = os.getenv("REDIS_HOST", "redis")
-redis_port = int(os.getenv("REDIS_PORT", "6379"))
+from cyberpartner_create.fantasynames import anglo, elf, french, dwarf, hobbit
 
 logging.config.fileConfig("log.ini")
 logger = logging.getLogger("console")
@@ -93,6 +89,15 @@ def get_archetypes() -> List[Dict]:
         {"id": 4, "name": "Tank", "weight": 0},
     ]
 
+def get_name() -> List[Dict]:
+    return [
+        {"name": anglo.anglo(), "weight": 0},
+        {"name": elf.elf(), "weight": 0},
+        {"name": french.french(), "weight": 0},
+        {"name": dwarf.dwarf(), "weight": 0},
+        {"name": hobbit.hobbit(), "weight": 0},
+    ]
+
 
 def populate_inventory() -> Dict:
     return  {
@@ -164,10 +169,14 @@ def create_new_cyberpartner(data: Dict) -> Dict:
     sprite_weights = {sprite["name"]: sprite["weight"] for sprite in _ref_sprites}
     chosen_sprite = spin_the_wheel_weighted(sprite_weights)
 
+    name_list = get_name()
+    name_weights = {name["name"]: name["weight"] for name in name_list}
+    chosen_name = spin_the_wheel_weighted(name_weights)
+
     received_attributes = choose_stat_multipliers(_ref_attributes)
     default_multipliers = get_default_multipliers()
     applied_multipliers = apply_stat_multipliers(default_multipliers, received_attributes)
-    try: # badge_id
+    try:
         cp_stats = {
             "strength": 5,
             "defense": 5,
@@ -178,14 +187,17 @@ def create_new_cyberpartner(data: Dict) -> Dict:
         }
         cp_attributes = [received_attributes[x] for x in received_attributes.keys()]
         now_utc = datetime.now(timezone.utc)
+        epoch_time = int(now_utc.timestamp())
         ts_utc = now_utc.strftime(TIMESTAMP_FORMAT)[:-3]
         cp_obj = {
+            # TODO => cp to identity
             "cp": {
-                "name": "hello",
+                "name": chosen_name,
                 "family": chosen_family,
                 "archetype": chosen_archetype,
                 "sprite": chosen_sprite,
-                "birthday_epoch": ts_utc,
+                "birthday_ts": ts_utc,
+                "birthday_epoch": epoch_time,
                 "stats": cp_stats,
                 "stat_modifiers": applied_multipliers,
                 "user_id": 0, # default - chilling for now
