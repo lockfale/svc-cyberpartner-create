@@ -137,9 +137,8 @@ def get_prefabbed_cyberpartner():
 
 def get_user_by_badge_id(pgsql: PostgreSQLConnector, badge_id: bytes) -> Optional[pd.DataFrame]:
     CHECK_QRY = """
-        select u.id 
-        from cackalacky.users u
-        JOIN cackalacky.badge b on b.id = u.badge_id 
+        select b.badge_id 
+        from cackalacky.badge b
         where b.badge_id = %(badge_id)s
     """
     params = {"badge_id": psycopg.Binary(badge_id)}
@@ -152,8 +151,7 @@ def get_cyberpartner_by_badge_id(pgsql: PostgreSQLConnector, badge_id: bytes) ->
         select cp.id 
         FROM cyberpartner cp
         JOIN cyberpartner_state cps on cps.cyberpartner_id = cp.id
-        JOIN users u ON u.id = cp.user_id
-        JOIN badge b ON u.badge_id = b.id
+        JOIN badge b ON cp.badge_id = b.id
         where b.badge_id = %(badge_id)s and cps.status < 1000
     """
     params = {"badge_id": psycopg.Binary(badge_id)}
