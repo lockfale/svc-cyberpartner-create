@@ -137,7 +137,7 @@ def get_prefabbed_cyberpartner():
 
 def get_user_by_badge_id(pgsql: PostgreSQLConnector, badge_id: bytes) -> Optional[pd.DataFrame]:
     CHECK_QRY = """
-        select b.badge_id 
+        select encode(b.badge_id, 'hex') as badge_id
         from cackalacky.badge b
         where b.badge_id = %(badge_id)s
     """
@@ -206,9 +206,9 @@ def create_new_cyberpartner(data: Dict) -> Dict:
     default_multipliers = get_default_multipliers()
     applied_multipliers = apply_stat_multipliers(default_multipliers, received_attributes)
 
-    try:
-        user_record = get_user_by_badge_id(pgsql, bytes.fromhex(badge_id))
-        if len(user_record) == 0:
+    try: # badge_id
+        badge_record = get_user_by_badge_id(pgsql, bytes.fromhex(badge_id))
+        if len(badge_record) == 0:
             logger.error("User has not registered yet. Cannot create cyberpartner.")
             return {"error": "User has not registered yet. Cannot create cyberpartner."}
 
@@ -217,7 +217,7 @@ def create_new_cyberpartner(data: Dict) -> Dict:
             logger.error(f"Badge {badge_id} already has a cyberpartner... should we kill it?")
             return {"error": f"Badge {badge_id} already has a cyberpartner... should we kill it?"}
 
-        user_record_dict = user_record.to_dict("records")[0]
+        badge_record_dict = badge_record.to_dict("records")[0]
         cp_stats = {
             "strength": 5,
             "defense": 5,
@@ -237,7 +237,8 @@ def create_new_cyberpartner(data: Dict) -> Dict:
                 "sprite": chosen_sprite,
                 "stats": cp_stats,
                 "stat_modifiers": applied_multipliers,
-                "user_id": user_record_dict["id"],
+                "user_id": 0, # default - chilling for now
+                "badge_id": badge_record_dict["badge_id"],
                 "is_active": 1,
             },
             "state": {
@@ -258,3 +259,4 @@ def create_new_cyberpartner(data: Dict) -> Dict:
         return cp_obj
     except Exception as e:
         logger.error(e)
+        return {"error": "Failed to create cyberpartner.", "exception": str(e)}
