@@ -12,6 +12,7 @@ logger.setLevel(logging.INFO)
 
 TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
+BADGE_ID_FOR_ROCK = ["004ac476"]
 
 def apply_stat_multipliers(default_multipliers: Dict[str, Dict], received_stat_modifiers: Dict[str, Dict]) -> Dict[str, Dict]:
     _multipliers = default_multipliers
@@ -189,6 +190,7 @@ def create_new_cyberpartner(data: Dict) -> Dict:
         now_utc = datetime.now(timezone.utc)
         epoch_time = int(now_utc.timestamp())
         ts_utc = now_utc.strftime(TIMESTAMP_FORMAT)[:-3]
+        is_rock = badge_id in BADGE_ID_FOR_ROCK
         cp_obj = {
             # TODO => cp to identity
             "cp": {
@@ -202,6 +204,7 @@ def create_new_cyberpartner(data: Dict) -> Dict:
                 "stat_modifiers": applied_multipliers,
                 "user_id": 0, # default - chilling for now
                 "badge_id": badge_id,
+                "rock": is_rock,
                 "is_active": 1,
             },
             "state": {
