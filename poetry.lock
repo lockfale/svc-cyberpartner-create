@@ -519,14 +519,14 @@ zstd = ["zstandard"]
 
 [[package]]
 name = "lockfale-connectors"
-version = "1.3.8"
+version = "1.4.0"
 description = "Connectors for Kafka, MQTT, and PostgreSQL"
 optional = false
 python-versions = ">=3.12,<4.0"
 groups = ["main"]
 files = [
-    {file = "lockfale_connectors-1.3.8-py3-none-any.whl", hash = "sha256:f93fc090f4abab543e752fb1d3ca2701f6954e93b3dcd0682510ec3fc3499b7c"},
-    {file = "lockfale_connectors-1.3.8.tar.gz", hash = "sha256:3cd922be0b71a3357320f7b11c969d54f8c4041c9425e1b1c9cca57641e5cfa7"},
+    {file = "lockfale_connectors-1.4.0-py3-none-any.whl", hash = "sha256:17bb80805a811edb7fc29429d2e5119130f6fc5f50ac615c490fcfd85d196a10"},
+    {file = "lockfale_connectors-1.4.0.tar.gz", hash = "sha256:e3644d75917faf8f8cf33b28b3555b4c32e36b621df6a4acfef72ec62797bf38"},
 ]
 
 [package.dependencies]
@@ -1564,4 +1564,4 @@ type = ["pytest-mypy"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.12"
-content-hash = "4e100ef37c16249488cd448bb3ce10429a54bedb508bd731c88b7730c3ead87f"
+content-hash = "a977e9673bbf6231c07c1298a27490f2e4ee186a6576810c0aba263fe9a1d2d7"

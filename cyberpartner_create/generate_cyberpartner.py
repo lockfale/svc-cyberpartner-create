@@ -101,6 +101,7 @@ def get_name() -> List[Dict]:
 
 
 def populate_inventory() -> Dict:
+    "asdf"
     return  {
         "apple": 5,
         "bread": 5,
