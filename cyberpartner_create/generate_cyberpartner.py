@@ -123,6 +123,7 @@ def get_available_attributes() -> List[Dict]:
 
 
 def get_default_multipliers() -> Dict[str, Dict]:
+    """force"""
     return {
         "age": {"multiplier": 1},
         "hunger": {"multiplier": 1},
