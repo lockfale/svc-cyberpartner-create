@@ -91,6 +91,7 @@ def create_cyberpartner_router(client: KafkaProducer, message: str):
 
 
 def _handle_new_cyberpartner_creation(client: KafkaProducer, data: Dict) -> None:
+    """1"""
     new_cp_obj = generate_cyberpartner.create_new_cyberpartner(data)
     data["action"] = "redis-new"
     data["cp_obj"] = new_cp_obj
