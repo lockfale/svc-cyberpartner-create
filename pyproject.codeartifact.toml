@@ -17,7 +17,12 @@ redis = "*"
 async_timeout = "*"
 confluent-kafka = "^2.8.2"
 ntplib = "*"
-lockfale-connectors = "1.5.0"
+lockfale-connectors = { version = "1.4.0", source = "lockfale" }
+
+[[tool.poetry.source]]
+name = "lockfale"
+url = "https://lockfale-059039070213.d.codeartifact.us-east-1.amazonaws.com/pypi/lockfale/simple/"
+priority = "supplemental"
 
 [tool.poetry.group.dev.dependencies]
 black = "~24.4"
