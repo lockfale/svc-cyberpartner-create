@@ -5,7 +5,7 @@ services:
       context: .
       dockerfile: Dockerfile
     networks:
-      - flink-net
+      - ckc-net
     environment:
       - DOPPLER_ENVIRONMENT
       - KAFKA_BROKERS_SVC
@@ -23,5 +23,5 @@ services:
     command: poetry run python main.py --topic ingress-cackalacky-cyberpartner-create --group create-cyberpartner
 
 networks:
-  flink-net:
+  ckc-net:
     external: true
