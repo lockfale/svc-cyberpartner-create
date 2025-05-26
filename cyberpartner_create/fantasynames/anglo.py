@@ -1,6 +1,7 @@
+import random
+
 from cyberpartner_create.fantasynames.data import anglo_data
 from cyberpartner_create.fantasynames.language import Language
-import random
 
 
 class Anglo(Language):

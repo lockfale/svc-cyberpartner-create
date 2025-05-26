@@ -1,8 +1,9 @@
-from cyberpartner_create.fantasynames.data import anglo_data, compound_tables
-from cyberpartner_create.fantasynames.language import Language
-from cyberpartner_create.fantasynames.anglo import Anglo
-from cyberpartner_create.fantasynames.french import French
 import random
+
+from cyberpartner_create.fantasynames.anglo import Anglo
+from cyberpartner_create.fantasynames.data import anglo_data, compound_tables
+from cyberpartner_create.fantasynames.french import French
+from cyberpartner_create.fantasynames.language import Language
 
 
 class Human(Language):

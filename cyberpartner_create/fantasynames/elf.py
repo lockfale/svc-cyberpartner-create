@@ -1,6 +1,7 @@
-from cyberpartner_create.fantasynames.data import elf_data, compound_tables
-from cyberpartner_create.fantasynames.language import Language
 import random
+
+from cyberpartner_create.fantasynames.data import compound_tables, elf_data
+from cyberpartner_create.fantasynames.language import Language
 
 
 class Elf(Language):
@@ -13,9 +14,7 @@ class Elf(Language):
 
     @classmethod
     def _name1_female(cls) -> str:
-        name = cls._name1_male() + cls._name_from_lists(
-            [elf_data["name1_female_suffixes"]]
-        )
+        name = cls._name1_male() + cls._name_from_lists([elf_data["name1_female_suffixes"]])
         return name
 
     @classmethod

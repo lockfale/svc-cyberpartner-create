@@ -1,5 +1,6 @@
-from cyberpartner_create.fantasynames.data import french_data
 import random
+
+from cyberpartner_create.fantasynames.data import french_data
 from cyberpartner_create.fantasynames.language import Language
 
 

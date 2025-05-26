@@ -4,7 +4,8 @@ import os
 import random
 from datetime import datetime, timezone
 from typing import Dict, List
-from cyberpartner_create.fantasynames import anglo, elf, french, dwarf, hobbit
+
+from cyberpartner_create.fantasynames import anglo, dwarf, elf, french, hobbit
 
 logging.config.fileConfig("log.ini")
 logger = logging.getLogger("console")
@@ -13,6 +14,7 @@ logger.setLevel(logging.INFO)
 TIMESTAMP_FORMAT = "%Y-%m-%dT%H:%M:%S.%f"
 
 BADGE_ID_FOR_ROCK = ["004ac476"]
+
 
 def apply_stat_multipliers(default_multipliers: Dict[str, Dict], received_stat_modifiers: Dict[str, Dict]) -> Dict[str, Dict]:
     _multipliers = default_multipliers
@@ -90,6 +92,7 @@ def get_archetypes() -> List[Dict]:
         {"id": 4, "name": "Tank", "weight": 0},
     ]
 
+
 def get_name() -> List[Dict]:
     return [
         {"name": anglo.anglo(), "weight": 0},
@@ -102,14 +105,7 @@ def get_name() -> List[Dict]:
 
 def populate_inventory() -> Dict:
     "asdf"
-    return  {
-        "apple": 5,
-        "bread": 5,
-        "cereal": 2,
-        "water": 5,
-        "soda": 1,
-        "money": 100
-    }
+    return {"apple": 5, "bread": 5, "cereal": 2, "water": 5, "soda": 1, "money": 100}
 
 
 def get_available_attributes() -> List[Dict]:
@@ -140,6 +136,7 @@ def get_prefabbed_cyberpartner():
 
 def create_cp_inventory() -> Dict:
     return populate_inventory()
+
 
 def create_new_cyberpartner(data: Dict) -> Dict:
     """
@@ -204,7 +201,7 @@ def create_new_cyberpartner(data: Dict) -> Dict:
                 "birthday_epoch": epoch_time,
                 "stats": cp_stats,
                 "stat_modifiers": applied_multipliers,
-                "user_id": 0, # default - chilling for now
+                "user_id": 0,  # default - chilling for now
                 "badge_id": badge_id,
                 "rock": is_rock,
                 "is_active": 1,

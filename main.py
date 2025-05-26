@@ -27,6 +27,7 @@ REDIS_CLIENT_INVENTORY: Optional[redis.Redis] = None
 
 redis_db_idx_cp_inventory = int(os.getenv("REDIS_DB_IDX_CP_INVENTORY", 5))
 
+
 def setup_redis():
     global REDIS_CLIENT
     global REDIS_CLIENT_INVENTORY

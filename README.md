@@ -50,8 +50,8 @@ doppler run -- docker compose -f docker-compose.services.yaml up -d
 # Maintenance
 
 ```bash
-poetry run isort src
-poetry run black src
+poetry run isort .
+poetry run black .
 ```
 
 # TODO

@@ -1,6 +1,7 @@
-from cyberpartner_create.fantasynames.data import dwarf_data, compound_tables
-from cyberpartner_create.fantasynames.language import Language
 import random
+
+from cyberpartner_create.fantasynames.data import compound_tables, dwarf_data
+from cyberpartner_create.fantasynames.language import Language
 
 
 class Dwarf(Language):
