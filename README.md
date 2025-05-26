@@ -1,6 +1,6 @@
 # Service - Cyberpartner Create
 
-A microservice that generates and manages cyberpartner entities for the Cackalacky platform. 
+A microservice that generates and manages cyberpartners for CKC25. 
 This service consumes Kafka messages, creates new cyberpartners based on badge IDs, and stores them in Redis. 
 It's built with Python 3.12 and uses Poetry for dependency management.
 
