@@ -3,7 +3,7 @@ $DebugPreference = "Continue"
 
 # 1. Get CodeArtifact token
 Write-Debug "Getting CodeArtifact token..."
-$env:CODEARTIFACT_AUTH_TOKEN = aws --profile ckc-bot-api codeartifact get-authorization-token `
+$env:CODEARTIFACT_AUTH_TOKEN = aws codeartifact get-authorization-token `
     --domain lockfale `
     --domain-owner 059039070213 `
     --query authorizationToken `
@@ -15,7 +15,7 @@ Write-Debug "Token: $env:CODEARTIFACT_AUTH_TOKEN"
 
 # 2. Get CodeArtifact repository URL
 Write-Debug "Getting repository URL..."
-$env:CODEARTIFACT_REPO_URL = aws --profile ckc-bot-api codeartifact get-repository-endpoint `
+$env:CODEARTIFACT_REPO_URL = aws codeartifact get-repository-endpoint `
     --domain lockfale `
     --domain-owner 059039070213 `
     --repository lockfale `

@@ -25,17 +25,24 @@ redis_port = int(os.getenv("REDIS_PORT", "6379"))
 REDIS_CLIENT: Optional[redis.Redis] = None
 REDIS_CLIENT_INVENTORY: Optional[redis.Redis] = None
 
+redis_db_idx_cp_data = int(os.getenv("REDIS_DB_IDX_CP_DATA", 0))
 redis_db_idx_cp_inventory = int(os.getenv("REDIS_DB_IDX_CP_INVENTORY", 5))
 
 
 def setup_redis():
+    """
+    Initialize Redis clients for cyberpartner data and inventory.
+
+    Sets up global `REDIS_CLIENT` and `REDIS_CLIENT_INVENTORY` using
+    environment variables `REDIS_HOST`, `REDIS_PORT`, `REDIS_DB_IDX_CP_DATA`, and `REDIS_DB_IDX_CP_INVENTORY`.
+    """
     global REDIS_CLIENT
     global REDIS_CLIENT_INVENTORY
     REDIS_CLIENT = redis.Redis(
         host=redis_host,
         port=redis_port,
         decode_responses=True,  # optional, strings not bytes
-        db=0,
+        db=redis_db_idx_cp_data,
     )
     REDIS_CLIENT_INVENTORY = redis.Redis(
         host=redis_host,
@@ -46,6 +53,9 @@ def setup_redis():
 
 
 def shutdown_redis():
+    """
+    Gracefully closes the Redis client connections if they are open.
+    """
     global REDIS_CLIENT
     global REDIS_CLIENT_INVENTORY
     if REDIS_CLIENT:
@@ -55,7 +65,26 @@ def shutdown_redis():
 
 
 def does_badge_have_cyberpartner(badge_id: str) -> bool:
-    """build me"""
+    """
+    Check if a badge has an associated cyberpartner in Redis.
+
+    This function queries the Redis database to determine if a cyberpartner
+    exists for the given badge ID. It checks both the main cyberpartner data
+    and the inventory data.
+
+    Note: This function does not check the state of the cyberpartner. It only
+    checks if a cyberpartner record exists for the badge.
+
+
+    Parameters
+    ----------
+    badge_id: str
+        The badge ID to check.
+
+    Returns
+    -------
+    bool
+    """
     cp_obj = REDIS_CLIENT.get(badge_id)
     if cp_obj:
         return True
@@ -63,13 +92,30 @@ def does_badge_have_cyberpartner(badge_id: str) -> bool:
 
 
 def upsert_cyberpartner_redis(badge_id: str, cp_obj: Dict):
-    """build me"""
+    """
+    Upsert a cyberpartner object in Redis.
+
+    This function updates the cyberpartner data in Redis for the given badge ID.
+    It also updates the cyberpartner inventory in Redis.
+
+    Parameters
+    ----------
+    badge_id: str
+    cp_obj: Dict
+    """
     REDIS_CLIENT.set(badge_id, json.dumps(cp_obj))
     REDIS_CLIENT_INVENTORY.set(badge_id, json.dumps(create_cp_inventory()))  # fresh inventory
 
 
 def create_cyberpartner_router(client: KafkaProducer, message: str):
-    """forcing build."""
+    """
+    Route the message to the appropriate handler based on the action type.
+
+    Parameters
+    ----------
+    client: KafkaProducer
+    message: str
+    """
     data = json.loads(message) if isinstance(message, str) else message
     if not data.get("badge_id"):
         logger.error(f"Missing required field(s): badge_id")
@@ -92,7 +138,18 @@ def create_cyberpartner_router(client: KafkaProducer, message: str):
 
 
 def _handle_new_cyberpartner_creation(client: KafkaProducer, data: Dict) -> None:
-    """1"""
+    """
+    Handle the creation of a new cyberpartner.
+
+    This function is called when a new cyberpartner needs to be created for a badge.
+    It generates the cyberpartner data, sends a message to the Redis handler, and
+    sends a success message to the MQTT topic.
+
+    Parameters
+    ----------
+    client: KafkaProducer
+    data: Dict
+    """
     new_cp_obj = generate_cyberpartner.create_new_cyberpartner(data)
     data["action"] = "redis-new"
     data["cp_obj"] = new_cp_obj
@@ -108,6 +165,15 @@ def _handle_new_cyberpartner_creation(client: KafkaProducer, data: Dict) -> None
 
 
 def _handle_redis_new(client: KafkaProducer, data: Dict, cp_data: Dict) -> None:
+    """
+    Handle the creation of a new cyberpartner in Redis.
+
+    Parameters
+    ----------
+    client: KafkaProducer
+    data: Dict
+    cp_data: Dict
+    """
     if not cp_data.get("state"):
         logger.error("REDIS => missing state key")
         return
@@ -138,6 +204,9 @@ def _handle_redis_new(client: KafkaProducer, data: Dict, cp_data: Dict) -> None:
 
 
 def main():
+    """
+    Main function to run the Kafka consumer and process messages.
+    """
     parser = argparse.ArgumentParser(description="Kafka Cyber Partner Test Consumer")
     parser.add_argument("--topic", default="flink-egress-state-update", help="Kafka topic to consume from")
     parser.add_argument("--group", default="test-consumer-group", help="Consumer group ID")

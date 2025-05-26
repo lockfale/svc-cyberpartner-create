@@ -17,6 +17,18 @@ BADGE_ID_FOR_ROCK = ["004ac476"]
 
 
 def apply_stat_multipliers(default_multipliers: Dict[str, Dict], received_stat_modifiers: Dict[str, Dict]) -> Dict[str, Dict]:
+    """
+    Takes the default multipliers and applies the received stat modifiers.
+
+    Parameters
+    ----------
+    default_multipliers: Dict[str, Dict]
+    received_stat_modifiers: Dict[str, Dict]
+
+    Returns
+    -------
+    Dict[str, Dict]
+    """
     _multipliers = default_multipliers
     for stat_modifier_key in received_stat_modifiers.keys():
         if stat_modifier_key in _multipliers:
@@ -26,7 +38,17 @@ def apply_stat_multipliers(default_multipliers: Dict[str, Dict], received_stat_m
 
 
 def choose_stat_multipliers(attributes: List[Dict]) -> Dict[str, Dict]:
-    # Organize attributes by group
+    """
+    Takes a list of attributes and chooses one from each group based on its chance.
+
+    Parameters
+    ----------
+    attributes: List[Dict]
+
+    Returns
+    -------
+    Dict[str, Dict]
+    """
     grouped_attributes: Dict[str, List[Dict]] = {}
     for attr in attributes:
         grouped_attributes.setdefault(attr["group"], []).append(attr)
@@ -45,6 +67,18 @@ def choose_stat_multipliers(attributes: List[Dict]) -> Dict[str, Dict]:
 
 
 def preprocess_weights(items_to_choose: Dict[str, float]) -> Dict[str, float]:
+    """
+    Takes a dict of items to choose from and preprocesses the weights.
+    If the total weight of all items is less than 100, the remaining weight is distributed evenly among the items with a weight of 0.
+
+    Parameters
+    ----------
+    items_to_choose: Dict[str, float]
+
+    Returns
+    -------
+    Dict[str, float]
+    """
     total_fixed_weight = sum(weight for weight in items_to_choose.values() if weight > 0)
     zero_weight_count = sum(1 for weight in items_to_choose.values() if weight == 0)
 
@@ -52,13 +86,23 @@ def preprocess_weights(items_to_choose: Dict[str, float]) -> Dict[str, float]:
         remaining_weight = max(0, 100 - total_fixed_weight)  # Ensure it doesn't exceed 100%
         distributed_weight = remaining_weight / zero_weight_count
 
-        # Assign the new weights
         items_to_choose = {item: (distributed_weight if weight == 0 else weight) for item, weight in items_to_choose.items()}
 
     return items_to_choose
 
 
 def spin_the_wheel_weighted(items_to_choose: Dict[str, float]) -> str:
+    """
+    Takes a dict of items to choose from and returns a randomly chosen item based on its weight.
+
+    Parameters
+    ----------
+    items_to_choose: Dict[str, float]
+
+    Returns
+    -------
+    str
+    """
     processed_weights = preprocess_weights(items_to_choose)
     chosen_item = random.choices(population=list(processed_weights.keys()), weights=list(processed_weights.values()), k=1)[0]
 
@@ -66,6 +110,12 @@ def spin_the_wheel_weighted(items_to_choose: Dict[str, float]) -> str:
 
 
 def get_sprite_indexes() -> List[Dict]:
+    """ARCHIVED - Never actually used.
+
+    Returns
+    -------
+    List[Dict]
+    """
     return [
         {"id": 1, "name": "rock", "index": 0, "weight": 0.1},
         {"id": 2, "name": "pickle", "index": 1, "weight": 0.1},
@@ -81,10 +131,23 @@ def get_sprite_indexes() -> List[Dict]:
 
 
 def get_families() -> List[Dict]:
+    """Hardcoded reference data for family.
+
+    Returns
+    -------
+    List[Dict]
+    """
     return [{"id": 1, "name": "Deeprooted", "weight": 0}, {"id": 2, "name": "Skybound", "weight": 0}]
 
 
 def get_archetypes() -> List[Dict]:
+    """
+    Hardcoded reference data for archetype.
+
+    Returns
+    -------
+    List[Dict]
+    """
     return [
         {"id": 1, "name": "Grunt", "weight": 0},
         {"id": 2, "name": "Scout", "weight": 0},
@@ -94,6 +157,13 @@ def get_archetypes() -> List[Dict]:
 
 
 def get_name() -> List[Dict]:
+    """
+    Generate a random name from a list of name generators. Evenly distributed.
+
+    Returns
+    -------
+    List[Dict]
+    """
     return [
         {"name": anglo.anglo(), "weight": 0},
         {"name": elf.elf(), "weight": 0},
@@ -104,11 +174,24 @@ def get_name() -> List[Dict]:
 
 
 def populate_inventory() -> Dict:
-    "asdf"
+    """
+    Default starting inventory.
+
+    Returns
+    -------
+    Dict
+    """
     return {"apple": 5, "bread": 5, "cereal": 2, "water": 5, "soda": 1, "money": 100}
 
 
 def get_available_attributes() -> List[Dict]:
+    """
+    Hardcoded reference data for available attributes.
+
+    Returns
+    -------
+    List[Dict]
+    """
     return [
         {"id": 1, "group": "age", "name": "ageless", "multiplier": 0, "chance": 1.0},
         {"id": 2, "group": "age", "name": "age_slow", "multiplier": 0.5, "chance": 5.0},
@@ -120,7 +203,13 @@ def get_available_attributes() -> List[Dict]:
 
 
 def get_default_multipliers() -> Dict[str, Dict]:
-    """force"""
+    """
+    Default multipliers for stats.
+
+    Returns
+    -------
+    Dict[str, Dict]
+    """
     return {
         "age": {"multiplier": 1},
         "hunger": {"multiplier": 1},
@@ -130,11 +219,14 @@ def get_default_multipliers() -> Dict[str, Dict]:
     }
 
 
-def get_prefabbed_cyberpartner():
-    pass
-
-
 def create_cp_inventory() -> Dict:
+    """
+    Creates the initial inventory for a cyberpartner.
+
+    Returns
+    -------
+    Dict
+    """
     return populate_inventory()
 
 
